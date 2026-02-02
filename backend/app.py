@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 from typing import Iterable
 
-from flask import Flask, jsonify, make_response, request
+from flask import Flask, jsonify, make_response, request, render_template, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 from psycopg import connect
@@ -54,8 +54,17 @@ def create_app() -> Flask:
     backend_env = Path(__file__).resolve().parent / ".env"
     load_dotenv(root_env)
     load_dotenv(backend_env)
-    app = Flask(__name__)
+    
+    app = Flask(__name__, static_folder="../static", template_folder="../templates")
     CORS(app)
+
+    @app.route("/")
+    def index():
+        return render_template("kiosk.html")
+
+    @app.route("/admin")
+    def admin():
+        return render_template("admin.html")
 
     @app.get("/api/feedback")
     def get_feedback():
@@ -236,4 +245,4 @@ def create_app() -> Flask:
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(host="localhost", port=int(os.getenv("BACKEND_PORT", "3001")), debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
