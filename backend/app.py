@@ -60,11 +60,11 @@ def create_app() -> Flask:
 
     @app.route("/")
     def index():
-        return render_template("kiosk.html")
-
-    @app.route("/admin")
-    def admin():
         return render_template("admin.html")
+
+    @app.route("/kiosk")
+    def kiosk():
+        return render_template("kiosk.html")
 
     @app.get("/api/feedback")
     def get_feedback():
