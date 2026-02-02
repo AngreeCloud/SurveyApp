@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Painel Administrativo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -16,15 +16,15 @@
                     <i class="fas fa-lock text-white text-2xl"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-slate-900">Painel Administrativo</h1>
-                <p class="text-slate-500">Entre com sua senha para acessar as estatísticas</p>
+                <p class="text-slate-500">Introduza a sua password para aceder às estatísticas</p>
             </div>
             <div class="space-y-4">
                 <div class="space-y-2">
-                    <label class="text-sm font-medium text-slate-700">Senha</label>
+                    <label class="text-sm font-medium text-slate-700">Password</label>
                     <input type="password" id="password" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all" placeholder="••••••••">
                 </div>
                 <button onclick="handleLogin()" id="login-btn" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all active:scale-[0.98]">
-                    Acessar Painel
+                    Entrar no painel
                 </button>
                 <p id="login-error" class="hidden text-sm text-red-600 text-center"></p>
             </div>
@@ -39,17 +39,30 @@
                         <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                             <i class="fas fa-chart-line text-white text-sm"></i>
                         </div>
-                        <span class="text-xl font-bold text-slate-900">Feedback Dashboard</span>
+                        <span class="text-xl font-bold text-slate-900">Dashboard de Feedback</span>
                     </div>
                     <div class="flex items-center gap-4">
-                        <input type="date" id="date-filter" onchange="loadStats()" class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <div class="flex items-center gap-2">
+                            <label for="date-filter" class="text-xs font-semibold text-slate-500">Data</label>
+                            <input type="date" id="date-filter" onchange="handleDateChange()" class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="month-filter" class="text-xs font-semibold text-slate-500">Mês</label>
+                            <input type="month" id="month-filter" onchange="handleMonthChange()" class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
                         <button onclick="openKiosk()" class="flex items-center gap-2 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
                             <i class="fas fa-expand"></i>
-                            <span>Kiosk</span>
+                            <span>Quiosque</span>
                         </button>
-                        <button onclick="exportData('csv')" class="p-2 text-slate-500 hover:text-blue-600 transition-colors">
-                            <i class="fas fa-download"></i>
-                        </button>
+                        <div class="relative">
+                            <button onclick="toggleExportMenu()" class="p-2 text-slate-500 hover:text-blue-600 transition-colors" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <div id="export-menu" class="hidden absolute right-0 mt-2 w-36 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+                                <button onclick="exportData('csv')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Exportar .csv</button>
+                                <button onclick="exportData('txt')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Exportar .txt</button>
+                            </div>
+                        </div>
                         <button onclick="logout()" class="p-2 text-slate-500 hover:text-red-600 transition-colors">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
@@ -80,7 +93,7 @@
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-slate-900">Feedbacks Recentes</h3>
+                    <h3 class="text-lg font-bold text-slate-900">Histórico de Feedback</h3>
                     <span id="total-count" class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full"></span>
                 </div>
                 <div class="overflow-x-auto">
@@ -88,8 +101,9 @@
                         <thead class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
                             <tr>
                                 <th class="px-6 py-4">ID</th>
-                                <th class="px-6 py-4">Nível</th>
-                                <th class="px-6 py-4">Data/Hora</th>
+                                <th class="px-6 py-4">Grau de satisfação</th>
+                                <th class="px-6 py-4">Data</th>
+                                <th class="px-6 py-4">Hora</th>
                             </tr>
                         </thead>
                         <tbody id="feedback-table-body" class="divide-y divide-slate-100">
@@ -104,6 +118,19 @@
     <script>
         let pieChart = null;
         let barChart = null;
+
+        function toggleExportMenu() {
+            const menu = document.getElementById('export-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('export-menu');
+            const button = event.target.closest('button[aria-haspopup="true"]');
+            if (!button && !menu.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
 
         function openKiosk() {
             window.location.href = '/kiosk';
@@ -129,22 +156,35 @@
                     document.getElementById('dashboard-container').classList.remove('hidden');
                     loadStats();
                 } else {
-                    error.textContent = 'Senha incorreta';
+                    error.textContent = 'Password incorreta';
                     error.classList.remove('hidden');
                 }
             } catch (err) {
-                error.textContent = 'Erro ao conectar ao servidor';
+                error.textContent = 'Erro ao ligar ao servidor';
                 error.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = 'Acessar Painel';
+                btn.innerHTML = 'Entrar no painel';
             }
+        }
+
+        function handleDateChange() {
+            const monthInput = document.getElementById('month-filter');
+            monthInput.value = '';
+            loadStats();
+        }
+
+        function handleMonthChange() {
+            const dateInput = document.getElementById('date-filter');
+            dateInput.value = '';
+            loadStats();
         }
 
         async function loadStats() {
             const date = document.getElementById('date-filter').value;
+            const month = document.getElementById('month-filter').value;
             const statsUrl = date ? `/api/admin/stats?date=${date}` : '/api/admin/stats';
-            const feedbackUrl = date ? `/api/feedback?date=${date}` : '/api/feedback';
+            const feedbackUrl = date ? `/api/feedback?date=${date}&limit=1000` : '/api/feedback?limit=1000';
 
             try {
                 const [statsRes, feedbackRes] = await Promise.all([
@@ -155,12 +195,43 @@
                 const statsData = await statsRes.json();
                 const feedbackData = await feedbackRes.json();
 
-                updateSummary(statsData);
-                updateCharts(statsData);
-                updateTable(feedbackData);
+                const filteredFeedback = month
+                    ? feedbackData.filter(row => new Date(row.created_at).toISOString().slice(0, 7) === month)
+                    : feedbackData;
+
+                const computedStats = month ? buildStatsFromFeedbacks(filteredFeedback) : statsData;
+
+                updateSummary(computedStats);
+                updateCharts(computedStats);
+                updateTable(filteredFeedback);
             } catch (err) {
                 console.error('Error loading stats:', err);
             }
+        }
+
+        function buildStatsFromFeedbacks(data) {
+            const levels = ['Muito Satisfeito', 'Satisfeito', 'Insatisfeito'];
+            const counts = levels.reduce((acc, level) => {
+                acc[level] = 0;
+                return acc;
+            }, {});
+
+            data.forEach(row => {
+                if (counts[row.satisfaction_level] !== undefined) {
+                    counts[row.satisfaction_level] += 1;
+                }
+            });
+
+            const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+            return {
+                total,
+                stats: levels.map(level => ({
+                    level,
+                    count: counts[level],
+                    percentage: total > 0 ? ((counts[level] / total) * 100).toFixed(1) : '0.0'
+                }))
+            };
         }
 
         function updateSummary(data) {
@@ -200,7 +271,7 @@
             });
 
             summary.innerHTML = html;
-            document.getElementById('total-count').textContent = `${total} registros`;
+            document.getElementById('total-count').textContent = `${total} registos`;
         }
 
         function updateCharts(data) {
@@ -244,7 +315,10 @@
                         }">${row.satisfaction_level}</span>
                     </td>
                     <td class="px-6 py-4 text-sm text-slate-500">
-                        ${new Date(row.created_at).toLocaleString('pt-BR')}
+                        ${new Date(row.created_at).toLocaleDateString('pt-PT')}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-500">
+                        ${new Date(row.created_at).toLocaleTimeString('pt-PT')}
                     </td>
                 </tr>
             `).join('');
