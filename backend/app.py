@@ -191,7 +191,8 @@ def create_app() -> Flask:
 
         if format_value == "csv":
             output = io.StringIO()
-            writer = csv.writer(output)
+            output.write("\ufeff")
+            writer = csv.writer(output, delimiter=";")
             writer.writerow(["ID", "Nível de Satisfação", "Data", "Hora"])
             for row in rows:
                 created_at = row["created_at"]

@@ -1,20 +1,20 @@
-# Satisfaction Survey App
+# App de Inquérito de Satisfação
 
-Aplicação de pesquisa de satisfação com frontend em Next.js e backend em Flask (Python). O backend expõe APIs REST para registrar feedbacks, autenticar admin, gerar estatísticas e exportar dados.
+Aplicação de feedback com backend em Flask (Python) e base de dados PostgreSQL (Neon). O painel de administração e o quiosque são servidos diretamente a partir das templates do Flask.
 
 ## Funcionalidades
 
-- Registro de feedbacks com níveis: Muito Satisfeito, Satisfeito, Insatisfeito.
-- Consulta de feedbacks com filtro por data e limite.
-- Login de administrador por senha.
+- Registo de feedback com níveis: Muito Satisfeito, Satisfeito, Insatisfeito.
+- Painel administrativo com PIN de acesso.
 - Estatísticas agregadas por nível de satisfação.
-- Exportação dos feedbacks em CSV ou TXT.
+- Gráfico de barras (Chart.js) e gráfico circular.
+- Histórico com filtros por data e por mês.
+- Exportação em .csv e .txt.
 
-## Estrutura do projeto
+## Rotas principais
 
-- Frontend: Next.js (pasta app/)
-- Backend: Flask (pasta backend/)
-- Banco: PostgreSQL (tabela satisfaction_feedback)
+- GET / -> Painel administrativo (PIN)
+- GET /kiosk -> Quiosque de feedback
 
 ## Endpoints do backend (Flask)
 
@@ -26,37 +26,32 @@ Aplicação de pesquisa de satisfação com frontend em Next.js e backend em Fla
 - GET /api/admin/stats?date=YYYY-MM-DD
 - GET /api/admin/export?format=csv|txt&date=YYYY-MM-DD
 
-## Funcionamento geral
+## Configuração local
 
-1. O usuário responde a pesquisa no frontend.
-2. O frontend envia o feedback para o backend Flask.
-3. O backend grava no PostgreSQL.
-4. A área admin consulta estatísticas e exporta relatórios.
-
-## Configuração do backend (Flask)
-
-Crie um arquivo .env (ou defina variáveis de ambiente) com:
+Crie um ficheiro .env (ou defina variáveis de ambiente) com:
 
 - DATABASE_URL=postgresql://usuario:senha@host:porta/banco
-- ADMIN_PASSWORD=uma_senha_forte
+- ADMIN_PASSWORD=uma_password_forte
 
-Instale dependências e rode o servidor:
+Instalar dependências e executar:
 
 - pip install -r backend/requirements.txt
 - python backend/app.py
 
-O backend inicia em http://localhost:5000
+Aplicação disponível em http://localhost:5000
 
-## Configuração do frontend
+## Deploy no Render
 
-Instale dependências e rode o frontend:
-
-- pnpm install
-- pnpm dev
-
-O frontend inicia em http://localhost:3000
+1. Criar um novo Web Service.
+2. Escolher o repositório deste projeto.
+3. Definir o diretório de trabalho para backend
+4. Build Command: pip install -r requirements.txt
+5. Start Command: python app.py
+6. Variáveis de ambiente:
+	 - DATABASE_URL
+	 - ADMIN_PASSWORD
 
 ## Observações
 
-- O backend Flask usa CORS liberado para facilitar o desenvolvimento local.
-- O frontend deve apontar para a base URL do Flask (ex.: http://localhost:5000).
+- O exportador CSV usa separador ";" e BOM UTF-8 para compatibilidade com Excel.
+- Para produção, recomenda-se definir uma password forte para ADMIN_PASSWORD.
