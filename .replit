@@ -41,7 +41,7 @@ externalPort = 80
 [deployment]
 deploymentTarget = "autoscale"
 run = ["python", "backend/app.py"]
-build = ["npm", "run", "build"]
+build = ["sh", "-c", "pip install -r backend/requirements.txt"]
 
 [userenv]
 
