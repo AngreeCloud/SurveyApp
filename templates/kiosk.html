@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Kiosk</title>
+    <title>Quiosque de Feedback</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -11,18 +11,21 @@
     <div id="thank-you" class="hidden fixed top-8 left-1/2 -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-2xl shadow-2xl z-50">
         <p class="text-xl font-semibold text-center">Obrigado pelo seu feedback!</p>
     </div>
+    <div id="spam-warning" class="hidden fixed top-8 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-8 py-4 rounded-2xl shadow-2xl z-50">
+        <p class="text-xl font-semibold text-center">Aguarde 1,5s antes de avaliar novamente</p>
+    </div>
 
-    <main class="flex-1 flex flex-col items-center justify-center p-6 gap-12">
+    <main class="flex-1 flex flex-col items-center justify-center p-6 gap-10 md:gap-12">
         <div class="text-center space-y-4">
-            <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-slate-900">
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900">
                 Como foi a sua experiência hoje?
             </h1>
-            <p class="text-xl md:text-2xl text-slate-500">
+            <p class="text-lg md:text-2xl text-slate-500">
                 A sua opinião é muito importante para nós.
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full max-w-6xl">
             <button onclick="handleFeedback('Muito Satisfeito')" class="group relative flex flex-col items-center gap-6 p-10 bg-white rounded-[3rem] shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-4 border-transparent hover:border-green-500">
                 <div class="w-32 h-32 md:w-48 md:h-48 flex items-center justify-center bg-green-50 rounded-full group-hover:scale-110 transition-transform duration-300">
                     <i class="fas fa-smile text-7xl md:text-9xl text-green-600"></i>
@@ -53,10 +56,16 @@
     <script>
         let lastClickTime = 0;
         let isBlocked = false;
+        const CLICK_TIMEOUT = 1500;
 
         async function handleFeedback(level) {
             const now = Date.now();
-            if (isBlocked || (now - lastClickTime < 2000)) return;
+            if (isBlocked || (now - lastClickTime < CLICK_TIMEOUT)) {
+                const warning = document.getElementById('spam-warning');
+                warning.classList.remove('hidden');
+                setTimeout(() => warning.classList.add('hidden'), 1200);
+                return;
+            }
             
             lastClickTime = now;
             isBlocked = true;
@@ -74,7 +83,7 @@
                     setTimeout(() => {
                         toast.classList.add('hidden');
                         isBlocked = false;
-                    }, 3000);
+                    }, 1500);
                 } else {
                     isBlocked = false;
                 }
