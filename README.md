@@ -40,16 +40,21 @@ Instalar dependências e executar:
 
 Aplicação disponível em http://localhost:5000
 
-## Deploy no Render
+## Deploy no Replit
 
-1. Criar um novo Web Service.
-2. Escolher o repositório deste projeto.
-3. Definir o diretório de trabalho para backend
-4. Build Command: pip install -r requirements.txt
-5. Start Command: python app.py
-6. Variáveis de ambiente:
-	 - DATABASE_URL
-	 - ADMIN_PASSWORD
+Aplicação em produção:
+
+https://survey-app--AngreeCloud.replit.app
+
+## Configuração no Replit
+
+1. Abrir o projeto no Replit.
+2. Definir o diretório de trabalho para backend.
+3. Build Command: pip install -r requirements.txt
+4. Start Command: python app.py
+5. Variáveis de ambiente:
+	- DATABASE_URL
+	- ADMIN_PASSWORD
 
 ## Observações
 
