@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
 interface FeedbackRecord {
   id: number;
   satisfaction_level: string;
@@ -58,7 +60,7 @@ export default function AdminPage() {
     setLoginError('');
 
     try {
-      const response = await fetch('/api/admin/login', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -80,8 +82,12 @@ export default function AdminPage() {
 
   const loadData = async (date?: string) => {
     try {
-      const statsUrl = date ? `/api/admin/stats?date=${date}` : '/api/admin/stats';
-      const feedbackUrl = date ? `/api/feedback?date=${date}` : '/api/feedback';
+      const statsUrl = date
+        ? `${API_BASE_URL}/api/admin/stats?date=${date}`
+        : `${API_BASE_URL}/api/admin/stats`;
+      const feedbackUrl = date
+        ? `${API_BASE_URL}/api/feedback?date=${date}`
+        : `${API_BASE_URL}/api/feedback`;
 
       const [statsRes, feedbackRes] = await Promise.all([
         fetch(statsUrl),
@@ -106,8 +112,8 @@ export default function AdminPage() {
   const handleExport = async (format: 'csv' | 'txt') => {
     try {
       const url = selectedDate 
-        ? `/api/admin/export?format=${format}&date=${selectedDate}`
-        : `/api/admin/export?format=${format}`;
+        ? `${API_BASE_URL}/api/admin/export?format=${format}&date=${selectedDate}`
+        : `${API_BASE_URL}/api/admin/export?format=${format}`;
       
       window.open(url, '_blank');
     } catch (error) {
@@ -116,7 +122,7 @@ export default function AdminPage() {
   };
 
   const handleShowButtons = () => {
-    window.open('/', '_blank');
+    window.open('/kiosk', '_blank');
   };
 
   const getColorForLevel = (level: string) => {
@@ -181,6 +187,9 @@ export default function AdminPage() {
             </form>
           </CardContent>
         </Card>
+        <div className="fixed bottom-4 right-4 text-xs text-slate-400">
+          Password de desenvolvimento -&gt; pedrosa
+        </div>
       </div>
     );
   }
