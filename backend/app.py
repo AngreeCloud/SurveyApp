@@ -172,7 +172,11 @@ def create_app() -> Flask:
         if date:
             rows = fetch_all(
                 """
-                SELECT id, satisfaction_level, created_at
+                SELECT
+                    id,
+                    satisfaction_level,
+                    TO_CHAR(created_at, 'DD/MM/YYYY') AS data,
+                    TO_CHAR(created_at, 'HH24:MI:SS') AS hora
                 FROM satisfaction_feedback
                 WHERE DATE(created_at) = %s
                 ORDER BY created_at DESC
@@ -182,7 +186,11 @@ def create_app() -> Flask:
         else:
             rows = fetch_all(
                 """
-                SELECT id, satisfaction_level, created_at
+                SELECT
+                    id,
+                    satisfaction_level,
+                    TO_CHAR(created_at, 'DD/MM/YYYY') AS data,
+                    TO_CHAR(created_at, 'HH24:MI:SS') AS hora
                 FROM satisfaction_feedback
                 ORDER BY created_at DESC
                 """,
@@ -195,15 +203,12 @@ def create_app() -> Flask:
             writer = csv.writer(output, delimiter=";", lineterminator="\n")
             writer.writerow(["ID", "Nível de Satisfação", "Data", "Hora"])
             for row in rows:
-                created_at = row["created_at"]
-                if isinstance(created_at, str):
-                    created_at = datetime.fromisoformat(created_at)
                 writer.writerow(
                     [
                         row["id"],
                         row["satisfaction_level"],
-                        created_at.strftime("%d/%m/%Y"),
-                        created_at.strftime("%H:%M:%S"),
+                        row["data"],
+                        row["hora"],
                     ]
                 )
 
