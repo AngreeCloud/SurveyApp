@@ -190,9 +190,9 @@ def create_app() -> Flask:
             )
 
         if format_value == "csv":
-            output = io.StringIO()
+            output = io.StringIO(newline="")
             output.write("\ufeff")
-            writer = csv.writer(output, delimiter=";")
+            writer = csv.writer(output, delimiter=";", lineterminator="\n")
             writer.writerow(["ID", "Nível de Satisfação", "Data", "Hora"])
             for row in rows:
                 created_at = row["created_at"]
@@ -208,7 +208,7 @@ def create_app() -> Flask:
                 )
 
             response = make_response(output.getvalue())
-            response.headers["Content-Type"] = "text/csv"
+            response.headers["Content-Type"] = "text/csv; charset=utf-8"
             response.headers[
                 "Content-Disposition"
             ] = f"attachment; filename=feedback-{datetime.utcnow().date().isoformat()}.csv"
