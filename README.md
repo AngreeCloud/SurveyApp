@@ -8,13 +8,17 @@ Aplicação de feedback com backend em Flask (Python) e base de dados PostgreSQL
 - Painel administrativo com PIN de acesso.
 - Estatísticas agregadas por nível de satisfação.
 - Gráfico de barras (Chart.js) e gráfico circular.
-- Histórico com filtros por data e por mês.
-- Exportação em .csv e .txt.
+- Histórico com filtros por data e por mês, ordenação por data e paginação.
+- Exportação em .csv e .txt tabular.
+- Sequência diária por nível (reset diário) e totais gerais no painel.
+- Página de comparação de períodos (dia/semana/mês/ano).
+- Botão de refresh e ajuda com instruções completas.
 
 ## Rotas principais
 
 - GET / -> Painel administrativo (PIN)
 - GET /kiosk -> Quiosque de feedback
+- GET /compare -> Comparação de períodos
 
 ## Endpoints do backend (Flask)
 
@@ -25,6 +29,7 @@ Aplicação de feedback com backend em Flask (Python) e base de dados PostgreSQL
 	- body: { "password": "..." }
 - GET /api/admin/stats?date=YYYY-MM-DD
 - GET /api/admin/export?format=csv|txt&date=YYYY-MM-DD
+- GET /api/feedback/range?start=YYYY-MM-DD&end=YYYY-MM-DD
 
 ## Configuração local
 
@@ -59,4 +64,6 @@ https://survey-app--AngreeCloud.replit.app
 ## Observações
 
 - O exportador CSV usa separador ";" e BOM UTF-8 para compatibilidade com Excel.
+- O TXT exportado é tabular (TSV), adequado para importação.
+- O painel mostra cliques diários (reset diário) e total geral com percentagem.
 - Para produção, recomenda-se definir uma password forte para ADMIN_PASSWORD.
