@@ -76,6 +76,9 @@
                         <button onclick="handleRefresh()" class="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="Atualizar">
                             <i class="fas fa-rotate"></i>
                         </button>
+                        <button onclick="openHelp()" class="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="Ajuda">
+                            <i class="fas fa-circle-question"></i>
+                        </button>
                         <button onclick="logout()" class="p-2 text-slate-500 hover:text-red-600 transition-colors">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
@@ -140,6 +143,56 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="help-modal" class="hidden fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-slate-900/40" onclick="closeHelp()"></div>
+        <div class="absolute right-4 top-20 w-[min(92vw,420px)] bg-white rounded-2xl shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+                <h3 class="text-base font-bold text-slate-900">Ajuda rápida</h3>
+                <button onclick="closeHelp()" class="p-2 text-slate-500 hover:text-slate-700">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="max-h-[60vh] overflow-y-auto px-5 py-4 text-sm text-slate-600 space-y-4">
+                <div>
+                    <p class="font-semibold text-slate-800">Visão geral</p>
+                    <p>Este painel permite monitorizar feedback em tempo real, comparar períodos e exportar registos. Os dados são registados por nível de satisfação e guardados com data/hora.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Cartões de resumo</p>
+                    <p>O número grande representa os cliques do dia (reset diário). A linha inferior mostra o total acumulado e a respetiva percentagem face ao total geral.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Gráficos</p>
+                    <p>O gráfico circular mostra a distribuição percentual por nível. O gráfico de barras compara quantidades absolutas. Ambos refletem os filtros ativos.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Filtros</p>
+                    <p>Use o filtro de data para um dia específico ou o de mês para um intervalo mensal. Ao aplicar um filtro de mês, as estatísticas são recalculadas com base nos registos filtrados.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Histórico</p>
+                    <p>O histórico mostra até 10 registos por página com ordenação por data. Use a ordenação para alternar entre mais recentes e mais antigos, e a paginação para navegar.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Exportação</p>
+                    <p>Exporta em CSV (compatível com Excel) ou TXT tabular para integração com outros sistemas.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Comparar</p>
+                    <p>Na página de comparação, escolha o tipo (Dia, Semana, Mês, Ano) e dois períodos distintos. O resultado apresenta diferenças com destaque para o período vencedor.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Quiosque</p>
+                    <p>O modo quiosque é pensado para utilização pública, com botões grandes e proteção anti-spam (1,5s entre cliques).</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Atualização</p>
+                    <p>O botão de refresh atualiza gráficos, cartões e histórico sem recarregar a página.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -488,6 +541,20 @@
         function handleRefresh() {
             loadStats();
         }
+
+        function openHelp() {
+            document.getElementById('help-modal').classList.remove('hidden');
+        }
+
+        function closeHelp() {
+            document.getElementById('help-modal').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeHelp();
+            }
+        });
 
         function exportData(format) {
             const date = document.getElementById('date-filter').value;
