@@ -68,6 +68,9 @@
                                 <button onclick="exportData('txt')" class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Exportar .txt</button>
                             </div>
                         </div>
+                        <button onclick="handleRefresh()" class="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="Atualizar">
+                            <i class="fas fa-rotate"></i>
+                        </button>
                         <button onclick="logout()" class="p-2 text-slate-500 hover:text-red-600 transition-colors">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
@@ -99,7 +102,12 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-slate-900">Histórico de Feedback</h3>
-                    <span id="total-count" class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full"></span>
+                    <div class="flex items-center gap-3">
+                        <button id="date-sort-toggle" onclick="toggleDateSort()" class="text-xs font-semibold text-slate-600 hover:text-blue-600">
+                            Data: mais recente
+                        </button>
+                        <span id="total-count" class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full"></span>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -116,6 +124,14 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+                    <p id="pagination-info" class="text-xs text-slate-500"></p>
+                    <div class="flex items-center gap-2">
+                        <button id="prev-page" onclick="goToPage(-1)" class="px-3 py-1 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Anterior</button>
+                        <span id="page-indicator" class="text-xs font-semibold text-slate-600"></span>
+                        <button id="next-page" onclick="goToPage(1)" class="px-3 py-1 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Próxima</button>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -123,6 +139,10 @@
     <script>
         let pieChart = null;
         let barChart = null;
+        let tableSortDesc = true;
+        let tablePage = 1;
+        const tablePageSize = 10;
+        let tableDataCache = [];
 
         function populateMonthOptions() {
             const select = document.getElementById('month-filter');
@@ -268,7 +288,9 @@
 
                 updateSummary(statsData);
                 updateCharts(computedStats);
-                updateTable(filteredFeedback);
+                tableDataCache = filteredFeedback;
+                tablePage = 1;
+                updateTable();
             } catch (err) {
                 console.error('Error loading stats:', err);
             }
@@ -375,9 +397,21 @@
             });
         }
 
-        function updateTable(data) {
+        function updateTable() {
             const body = document.getElementById('feedback-table-body');
-            body.innerHTML = data.map(row => `
+            const sorted = [...tableDataCache].sort((a, b) => {
+                const aDate = new Date(a.created_at).getTime();
+                const bDate = new Date(b.created_at).getTime();
+                return tableSortDesc ? bDate - aDate : aDate - bDate;
+            });
+
+            const total = sorted.length;
+            const totalPages = Math.max(1, Math.ceil(total / tablePageSize));
+            tablePage = Math.min(Math.max(tablePage, 1), totalPages);
+            const start = (tablePage - 1) * tablePageSize;
+            const pageItems = sorted.slice(start, start + tablePageSize);
+
+            body.innerHTML = pageItems.map(row => `
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="px-6 py-4 text-sm text-slate-500 font-mono">#${row.id}</td>
                     <td class="px-6 py-4">
@@ -394,6 +428,29 @@
                     </td>
                 </tr>
             `).join('');
+
+            document.getElementById('pagination-info').textContent =
+                total === 0 ? 'Sem registos' : `A mostrar ${start + 1}-${Math.min(start + tablePageSize, total)} de ${total}`;
+            document.getElementById('page-indicator').textContent = `${tablePage} / ${totalPages}`;
+            document.getElementById('prev-page').disabled = tablePage <= 1;
+            document.getElementById('next-page').disabled = tablePage >= totalPages;
+        }
+
+        function toggleDateSort() {
+            tableSortDesc = !tableSortDesc;
+            const label = tableSortDesc ? 'Data: mais recente' : 'Data: mais antiga';
+            document.getElementById('date-sort-toggle').textContent = label;
+            tablePage = 1;
+            updateTable();
+        }
+
+        function goToPage(direction) {
+            tablePage += direction;
+            updateTable();
+        }
+
+        function handleRefresh() {
+            loadStats();
         }
 
         function exportData(format) {
