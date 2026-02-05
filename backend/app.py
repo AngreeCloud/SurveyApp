@@ -220,25 +220,21 @@ def create_app() -> Flask:
             return response
 
         if format_value == "txt":
-            lines = []
+            output = io.StringIO(newline="")
+            writer = csv.writer(output, delimiter="\t", lineterminator="\n")
+            writer.writerow(["ID", "Nível de Satisfação", "Data", "Hora"])
             for row in rows:
-                created_at = row["created_at"]
-                if isinstance(created_at, str):
-                    created_at = datetime.fromisoformat(created_at)
-                lines.append(
-                    "\n".join(
-                        [
-                            f"ID: {row['id']}",
-                            f"Nível: {row['satisfaction_level']}",
-                            f"Data: {created_at.strftime('%d/%m/%Y')}",
-                            f"Hora: {created_at.strftime('%H:%M:%S')}",
-                            "---",
-                        ]
-                    )
+                writer.writerow(
+                    [
+                        row["id"],
+                        row["satisfaction_level"],
+                        row["data"],
+                        row["hora"],
+                    ]
                 )
 
-            response = make_response("\n".join(lines))
-            response.headers["Content-Type"] = "text/plain"
+            response = make_response(output.getvalue())
+            response.headers["Content-Type"] = "text/plain; charset=utf-8"
             response.headers[
                 "Content-Disposition"
             ] = f"attachment; filename=feedback-{datetime.utcnow().date().isoformat()}.txt"
