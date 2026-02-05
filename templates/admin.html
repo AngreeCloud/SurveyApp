@@ -147,6 +147,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             populateMonthOptions();
             const storedPassword = localStorage.getItem('adminPassword');
+            const sessionActive = sessionStorage.getItem('adminSession') === '1';
+            if (sessionActive && storedPassword) {
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('dashboard-container').classList.remove('hidden');
+                loadStats();
+                return;
+            }
             if (storedPassword) {
                 autoLogin(storedPassword);
             }
@@ -187,6 +194,7 @@
 
                 if (response.ok) {
                     localStorage.setItem('adminPassword', password);
+                    sessionStorage.setItem('adminSession', '1');
                     document.getElementById('login-container').classList.add('hidden');
                     document.getElementById('dashboard-container').classList.remove('hidden');
                     loadStats();
@@ -212,11 +220,13 @@
                 });
 
                 if (response.ok) {
+                    sessionStorage.setItem('adminSession', '1');
                     document.getElementById('login-container').classList.add('hidden');
                     document.getElementById('dashboard-container').classList.remove('hidden');
                     loadStats();
                 } else {
                     localStorage.removeItem('adminPassword');
+                    sessionStorage.removeItem('adminSession');
                 }
             } catch (err) {
                 console.error('Auto-login failed:', err);
@@ -394,6 +404,7 @@
 
         function logout() {
             localStorage.removeItem('adminPassword');
+            sessionStorage.removeItem('adminSession');
             window.location.reload();
         }
     </script>
