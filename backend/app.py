@@ -31,12 +31,61 @@ def fetch_all(query: str, params: Iterable | None = None) -> list[dict]:
             return cur.fetchall()
 
 
+def fetch_one(query: str, params: Iterable | None = None) -> dict | None:
+    rows = fetch_all(query, params)
+    return rows[0] if rows else None
+
+
 def execute(query: str, params: Iterable | None = None) -> None:
     database_url = get_database_url()
     with connect(database_url) as conn:
         with conn.cursor() as cur:
             cur.execute(query, params or ())
         conn.commit()
+
+
+def ensure_schema() -> None:
+    execute(
+        """
+        CREATE TABLE IF NOT EXISTS satisfaction_feedback (
+            id SERIAL PRIMARY KEY,
+            satisfaction_level TEXT NOT NULL,
+            seq INTEGER,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        """
+    )
+    execute(
+        """
+        ALTER TABLE satisfaction_feedback
+        ADD COLUMN IF NOT EXISTS seq INTEGER
+        """
+    )
+    execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_feedback_created_at
+        ON satisfaction_feedback (created_at)
+        """
+    )
+    execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_feedback_level_date
+        ON satisfaction_feedback (satisfaction_level, created_at)
+        """
+    )
+
+
+def build_stats(rows: list[dict]) -> dict:
+    total = sum(int(row["count"]) for row in rows)
+    stats = [
+        {
+            "level": row["satisfaction_level"],
+            "count": int(row["count"]),
+            "percentage": f"{(int(row['count']) / total * 100):.1f}" if total > 0 else "0.0",
+        }
+        for row in rows
+    ]
+    return {"total": total, "stats": stats}
 
 
 def parse_date(date_str: str | None) -> str | None:
@@ -57,6 +106,7 @@ def create_app() -> Flask:
     
     app = Flask(__name__, static_folder="../static", template_folder="../templates")
     CORS(app)
+    ensure_schema()
 
     @app.route("/")
     def index():
@@ -107,12 +157,23 @@ def create_app() -> Flask:
         if satisfaction_level not in ALLOWED_LEVELS:
             return jsonify({"error": "Invalid satisfaction level"}), 400
 
-        execute(
+        seq_row = fetch_one(
             """
-            INSERT INTO satisfaction_feedback (satisfaction_level)
-            VALUES (%s)
+            SELECT COALESCE(MAX(seq), 0) + 1 AS next_seq
+            FROM satisfaction_feedback
+            WHERE satisfaction_level = %s
+              AND DATE(created_at) = CURRENT_DATE
             """,
             (satisfaction_level,),
+        )
+        next_seq = int(seq_row["next_seq"]) if seq_row else 1
+
+        execute(
+            """
+            INSERT INTO satisfaction_feedback (satisfaction_level, seq)
+            VALUES (%s, %s)
+            """,
+            (satisfaction_level, next_seq),
         )
 
         return jsonify({"success": True, "message": "Obrigado pelo seu feedback!"})
@@ -152,17 +213,36 @@ def create_app() -> Flask:
                 (),
             )
 
-        total = sum(int(row["count"]) for row in rows)
-        stats = [
-            {
-                "level": row["satisfaction_level"],
-                "count": int(row["count"]),
-                "percentage": f"{(int(row['count']) / total * 100):.1f}" if total > 0 else "0.0",
-            }
-            for row in rows
-        ]
+        current_stats = build_stats(rows)
 
-        return jsonify({"total": total, "stats": stats})
+        overall_rows = fetch_all(
+            """
+            SELECT satisfaction_level, COUNT(*) AS count
+            FROM satisfaction_feedback
+            GROUP BY satisfaction_level
+            """,
+            (),
+        )
+        overall_stats = build_stats(overall_rows)
+
+        today_rows = fetch_all(
+            """
+            SELECT satisfaction_level, COUNT(*) AS count
+            FROM satisfaction_feedback
+            WHERE DATE(created_at) = CURRENT_DATE
+            GROUP BY satisfaction_level
+            """,
+            (),
+        )
+        today_stats = build_stats(today_rows)
+
+        return jsonify(
+            {
+                **current_stats,
+                "overall": overall_stats,
+                "today": today_stats,
+            }
+        )
 
     @app.get("/api/admin/export")
     def admin_export():

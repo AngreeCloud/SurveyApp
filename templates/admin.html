@@ -256,7 +256,7 @@
 
                 const computedStats = month ? buildStatsFromFeedbacks(filteredFeedback) : statsData;
 
-                updateSummary(computedStats);
+                updateSummary(statsData);
                 updateCharts(computedStats);
                 updateTable(filteredFeedback);
             } catch (err) {
@@ -291,7 +291,10 @@
 
         function updateSummary(data) {
             const summary = document.getElementById('stats-summary');
-            const total = data.total;
+            const today = data.today || { total: 0, stats: [] };
+            const overall = data.overall || { total: 0, stats: [] };
+            const totalToday = today.total || 0;
+            const totalOverall = overall.total || 0;
             const levels = {
                 'Muito Satisfeito': { color: 'bg-green-100 text-green-700', icon: 'fa-smile' },
                 'Satisfeito': { color: 'bg-blue-100 text-blue-700', icon: 'fa-meh' },
@@ -302,22 +305,26 @@
                 <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <p class="text-sm font-medium text-slate-500 mb-1">Total de Feedbacks</p>
                     <div class="flex items-end justify-between">
-                        <h4 class="text-2xl font-bold text-slate-900">${total}</h4>
+                        <div>
+                            <h4 class="text-2xl font-bold text-slate-900">${totalToday}</h4>
+                            <p class="text-xs text-slate-500">Total: ${totalOverall}</p>
+                        </div>
                         <div class="p-2 bg-slate-100 rounded-lg"><i class="fas fa-users text-slate-600"></i></div>
                     </div>
                 </div>
             `;
 
             Object.keys(levels).forEach(level => {
-                const stat = data.stats.find(s => s.level === level) || { count: 0, percentage: '0.0' };
+                const statToday = today.stats.find(s => s.level === level) || { count: 0, percentage: '0.0' };
+                const statOverall = overall.stats.find(s => s.level === level) || { count: 0, percentage: '0.0' };
                 const config = levels[level];
                 html += `
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <p class="text-sm font-medium text-slate-500 mb-1">${level}</p>
                         <div class="flex items-end justify-between">
                             <div>
-                                <h4 class="text-2xl font-bold text-slate-900">${stat.count}</h4>
-                                <span class="text-xs font-bold ${config.color.split(' ')[1]}">${stat.percentage}%</span>
+                                <h4 class="text-2xl font-bold text-slate-900">${statToday.count}</h4>
+                                <p class="text-xs text-slate-500">Total: ${statOverall.count}</p>
                             </div>
                             <div class="p-2 ${config.color.split(' ')[0]} rounded-lg"><i class="fas ${config.icon} ${config.color.split(' ')[1]}"></i></div>
                         </div>
@@ -326,7 +333,7 @@
             });
 
             summary.innerHTML = html;
-            document.getElementById('total-count').textContent = `${total} registos`;
+            document.getElementById('total-count').textContent = `${totalOverall} registos`;
         }
 
         function updateCharts(data) {
