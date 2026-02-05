@@ -6,6 +6,7 @@
     <title>Painel Administrativo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-slate-50">
@@ -148,6 +149,8 @@
         let tablePage = 1;
         const tablePageSize = 10;
         let tableDataCache = [];
+
+        Chart.register(ChartDataLabels);
 
         function populateMonthOptions() {
             const select = document.getElementById('month-filter');
@@ -365,7 +368,7 @@
                         <div class="flex items-end justify-between">
                             <div>
                                 <h4 class="text-2xl font-bold text-slate-900">${statToday.count}</h4>
-                                <p class="text-xs text-slate-500">Total: ${statOverall.count}</p>
+                                <p class="text-xs text-slate-500">Total: ${statOverall.count} (${statOverall.percentage}%)</p>
                             </div>
                             <div class="p-2 ${config.color.split(' ')[0]} rounded-lg"><i class="fas ${config.icon} ${config.color.split(' ')[1]}"></i></div>
                         </div>
@@ -392,7 +395,31 @@
                     labels,
                     datasets: [{ data: counts, backgroundColor: colors }]
                 },
-                options: { plugins: { legend: { position: 'bottom' } }, cutout: '70%' }
+                options: {
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    const value = context.raw || 0;
+                                    const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                                    return `${context.label}: ${value} (${pct}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#0f172a',
+                            font: { weight: '700', size: 11 },
+                            formatter: (value, context) => {
+                                const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                                return `${pct}%`;
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
             });
 
             const ctxBar = document.getElementById('barChart').getContext('2d');
