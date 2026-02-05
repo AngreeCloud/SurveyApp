@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparar Períodos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-slate-50">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-scale-balanced text-white text-sm"></i>
+                    </div>
+                    <span class="text-xl font-bold text-slate-900 leading-tight">Comparar Períodos</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="goBack()" class="flex items-center gap-2 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Voltar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <div class="flex-1 space-y-3">
+                    <label class="text-xs font-semibold text-slate-500">Tipo de comparação</label>
+                    <div class="flex flex-wrap gap-2" id="mode-buttons">
+                        <button class="mode-btn px-3 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white" data-mode="day">Dia</button>
+                        <button class="mode-btn px-3 py-2 rounded-lg text-sm font-semibold bg-slate-100 text-slate-700" data-mode="week">Semana</button>
+                        <button class="mode-btn px-3 py-2 rounded-lg text-sm font-semibold bg-slate-100 text-slate-700" data-mode="month">Mês</button>
+                        <button class="mode-btn px-3 py-2 rounded-lg text-sm font-semibold bg-slate-100 text-slate-700" data-mode="year">Ano</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-500">Período (Esquerda)</label>
+                    <input id="left-input" list="left-options" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Selecionar período">
+                    <datalist id="left-options"></datalist>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-500">Período (Direita)</label>
+                    <input id="right-input" list="right-options" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Selecionar período">
+                    <datalist id="right-options"></datalist>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="runCompare()" class="px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+                    Comparar
+                </button>
+            </div>
+        </div>
+
+        <div id="compare-result" class="mt-8 hidden">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900">Resultado da comparação</h3>
+                    <p id="compare-title" class="text-xs text-slate-500"></p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">Esquerda</th>
+                                <th class="px-6 py-4">Parâmetro</th>
+                                <th class="px-6 py-4">Direita</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compare-table" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const ranges = { day: [], week: [], month: [], year: [] };
+        const rangeMap = { day: new Map(), week: new Map(), month: new Map(), year: new Map() };
+        let currentMode = 'day';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sessionActive = sessionStorage.getItem('adminSession') === '1';
+            if (!sessionActive) {
+                window.location.href = '/';
+                return;
+            }
+            buildRanges();
+            setMode('day');
+            bindModeButtons();
+        });
+
+        function bindModeButtons() {
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => setMode(btn.dataset.mode));
+            });
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                const active = btn.dataset.mode === mode;
+                btn.classList.toggle('bg-blue-600', active);
+                btn.classList.toggle('text-white', active);
+                btn.classList.toggle('bg-slate-100', !active);
+                btn.classList.toggle('text-slate-700', !active);
+            });
+
+            fillDatalist('left-options', ranges[mode]);
+            fillDatalist('right-options', ranges[mode]);
+            document.getElementById('left-input').value = '';
+            document.getElementById('right-input').value = '';
+        }
+
+        function fillDatalist(id, items) {
+            const list = document.getElementById(id);
+            list.innerHTML = items.map(item => `<option value="${item.label}"></option>`).join('');
+        }
+
+        function buildRanges() {
+            const today = new Date();
+
+            for (let i = 0; i < 365; i += 1) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const label = date.toLocaleDateString('pt-PT');
+                const start = toISODate(date);
+                const end = toISODate(date);
+                addRange('day', { label, start, end });
+            }
+
+            for (let i = 0; i < 52; i += 1) {
+                const end = startOfWeek(today);
+                end.setDate(end.getDate() - (i * 7));
+                const start = new Date(end);
+                const weekEnd = new Date(start);
+                weekEnd.setDate(start.getDate() + 6);
+                const label = `${start.toLocaleDateString('pt-PT')} a ${weekEnd.toLocaleDateString('pt-PT')}`;
+                addRange('week', { label, start: toISODate(start), end: toISODate(weekEnd) });
+            }
+
+            for (let i = 0; i < 24; i += 1) {
+                const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const label = date.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+                const start = new Date(date.getFullYear(), date.getMonth(), 1);
+                const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+                addRange('month', { label: capitalize(label), start: toISODate(start), end: toISODate(end) });
+            }
+
+            for (let i = 0; i < 10; i += 1) {
+                const year = today.getFullYear() - i;
+                const label = String(year);
+                const start = new Date(year, 0, 1);
+                const end = new Date(year, 11, 31);
+                addRange('year', { label, start: toISODate(start), end: toISODate(end) });
+            }
+        }
+
+        function addRange(type, item) {
+            ranges[type].push(item);
+            rangeMap[type].set(item.label, item);
+        }
+
+        function startOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function toISODate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function capitalize(text) {
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+
+        async function runCompare() {
+            const leftLabel = document.getElementById('left-input').value;
+            const rightLabel = document.getElementById('right-input').value;
+            const leftRange = rangeMap[currentMode].get(leftLabel);
+            const rightRange = rangeMap[currentMode].get(rightLabel);
+
+            if (!leftRange || !rightRange) {
+                alert('Escolhe períodos válidos para comparar.');
+                return;
+            }
+
+            const [leftRows, rightRows] = await Promise.all([
+                fetch(`/api/feedback/range?start=${leftRange.start}&end=${leftRange.end}`).then(r => r.json()),
+                fetch(`/api/feedback/range?start=${rightRange.start}&end=${rightRange.end}`).then(r => r.json())
+            ]);
+
+            const leftStats = computeStats(leftRows);
+            const rightStats = computeStats(rightRows);
+
+            renderCompare(leftStats, rightStats, leftLabel, rightLabel);
+        }
+
+        function computeStats(rows) {
+            const counts = {
+                total: rows.length,
+                'Muito Satisfeito': 0,
+                'Satisfeito': 0,
+                'Insatisfeito': 0
+            };
+
+            rows.forEach(row => {
+                if (counts[row.satisfaction_level] !== undefined) {
+                    counts[row.satisfaction_level] += 1;
+                }
+            });
+
+            return counts;
+        }
+
+        function renderCompare(left, right, leftLabel, rightLabel) {
+            const table = document.getElementById('compare-table');
+            const rows = [
+                { key: 'total', label: 'Total' },
+                { key: 'Muito Satisfeito', label: 'Muito Satisfeito' },
+                { key: 'Satisfeito', label: 'Satisfeito' },
+                { key: 'Insatisfeito', label: 'Insatisfeito' }
+            ];
+
+            table.innerHTML = rows.map(row => {
+                const leftVal = left[row.key] ?? 0;
+                const rightVal = right[row.key] ?? 0;
+                const diff = leftVal - rightVal;
+                const leftWin = diff > 0;
+                const rightWin = diff < 0;
+                const diffText = diff === 0 ? '0' : `${diff > 0 ? '+' : ''}${diff}`;
+
+                return `
+                    <tr>
+                        <td class="px-6 py-4 text-sm font-semibold ${leftWin ? 'text-slate-900' : 'text-slate-400'}">
+                            ${leftVal}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-700 flex items-center gap-2">
+                            <span>${row.label}</span>
+                            <span class="px-2 py-0.5 text-xs font-bold rounded-full ${diff === 0 ? 'bg-slate-100 text-slate-500' : (diff > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}">
+                                ${diffText}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-semibold ${rightWin ? 'text-slate-900' : 'text-slate-400'}">
+                            ${rightVal}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('compare-title').textContent = `${leftLabel}  vs  ${rightLabel}`;
+            document.getElementById('compare-result').classList.remove('hidden');
+        }
+
+        function goBack() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

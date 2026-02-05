@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Iterable
 
 from flask import Flask, jsonify, make_response, request, render_template, send_from_directory
@@ -116,6 +116,10 @@ def create_app() -> Flask:
     def kiosk():
         return render_template("kiosk.html")
 
+    @app.route("/compare")
+    def compare():
+        return render_template("compare.html")
+
     @app.get("/api/feedback")
     def get_feedback():
         date = parse_date(request.args.get("date"))
@@ -146,6 +150,29 @@ def create_app() -> Flask:
                 """,
                 (limit_value,),
             )
+
+        return jsonify(rows)
+
+    @app.get("/api/feedback/range")
+    def get_feedback_range():
+        start = parse_date(request.args.get("start"))
+        end = parse_date(request.args.get("end"))
+
+        if not start or not end:
+            return jsonify({"error": "Invalid date range"}), 400
+
+        start_date = datetime.strptime(start, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end, "%Y-%m-%d").date() + timedelta(days=1)
+
+        rows = fetch_all(
+            """
+            SELECT id, satisfaction_level, created_at
+            FROM satisfaction_feedback
+            WHERE created_at >= %s AND created_at < %s
+            ORDER BY created_at DESC
+            """,
+            (start_date, end_date),
+        )
 
         return jsonify(rows)
 

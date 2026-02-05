@@ -59,6 +59,10 @@
                             <i class="fas fa-expand"></i>
                             <span>Quiosque</span>
                         </button>
+                        <button onclick="openCompare()" class="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
+                            <i class="fas fa-scale-balanced"></i>
+                            <span>Comparar</span>
+                        </button>
                         <div class="relative">
                             <button onclick="toggleExportMenu()" class="p-2 text-slate-500 hover:text-blue-600 transition-colors" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-download"></i>
@@ -103,8 +107,9 @@
                 <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-slate-900">Histórico de Feedback</h3>
                     <div class="flex items-center gap-3">
-                        <button id="date-sort-toggle" onclick="toggleDateSort()" class="text-xs font-semibold text-slate-600 hover:text-blue-600">
-                            Data: mais recente
+                        <button id="date-sort-toggle" onclick="toggleDateSort()" class="px-3 py-1 text-xs font-semibold text-slate-600 bg-slate-100 rounded-full hover:bg-slate-200 hover:text-blue-600 transition-colors flex items-center gap-1">
+                            <span id="date-sort-label">Data: mais recente</span>
+                            <i class="fas fa-sort"></i>
                         </button>
                         <span id="total-count" class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full"></span>
                     </div>
@@ -194,6 +199,10 @@
 
         function openKiosk() {
             window.location.href = '/kiosk';
+        }
+
+        function openCompare() {
+            window.location.href = '/compare';
         }
 
         async function handleLogin(event) {
@@ -439,7 +448,7 @@
         function toggleDateSort() {
             tableSortDesc = !tableSortDesc;
             const label = tableSortDesc ? 'Data: mais recente' : 'Data: mais antiga';
-            document.getElementById('date-sort-toggle').textContent = label;
+            document.getElementById('date-sort-label').textContent = label;
             tablePage = 1;
             updateTable();
         }
